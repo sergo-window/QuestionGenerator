@@ -9,5 +9,4 @@ class QuestionGeneratorApplicationTests {
 	@Test
 	void contextLoads() {
 	}
-
 }

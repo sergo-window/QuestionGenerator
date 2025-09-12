@@ -1,26 +1,28 @@
 package org.skypro.question_generator.service;
 
 import org.skypro.question_generator.domain.Question;
-import org.skypro.question_generator.repository.JavaQuestionRepository;
+import org.skypro.question_generator.repository.MathQuestionRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Service
-public class JavaQuestionService implements QuestionService {
-    private final JavaQuestionRepository repository;
+public class MathQuestionService implements QuestionService {
+    private final MathQuestionRepository repository;
     private final Random random = new Random();
 
-    public JavaQuestionService(JavaQuestionRepository repository) {
+    public MathQuestionService(MathQuestionRepository repository) {
         this.repository = repository;
-        initializeJavaQuestions();
+        initializeMathQuestions();
     }
 
-    private void initializeJavaQuestions() {
-        repository.add(new Question("What is Java?", "Programming language"));
-        repository.add(new Question("Variable types in Java", "byte, short, int, long, float, double, boolean, char"));
-        repository.add(new Question("Types of collections in Java", "List, Map, Set"));
-        repository.add(new Question("Memory areas in Java", "Stack, Heap"));
+    private void initializeMathQuestions() {
+        repository.add(new Question("2 + 2?", "4"));
+        repository.add(new Question("5 * 5", "25"));
+        repository.add(new Question("Square root of 16", "4"));
+        repository.add(new Question("Derivative of x^2", "2x"));
+        repository.add(new Question("10 - 3", "7"));
+        repository.add(new Question("Area of circle (πr²)", "πr²"));
     }
 
     @Override

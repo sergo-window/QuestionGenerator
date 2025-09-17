@@ -8,8 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.skypro.question_generator.domain.Question;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -18,37 +17,63 @@ import static org.mockito.Mockito.*;
 class ExaminerServiceImplTest {
 
     @Mock
-    private QuestionService questionService;
+    private JavaQuestionService javaQuestionService;
+
+    @Mock
+    private MathQuestionService mathQuestionService;
 
     @InjectMocks
     private ExaminerServiceImpl examinerService;
 
     @Test
-    void getQuestions_shouldReturnRequestedAmountOfQuestions() {
-        Set<Question> mockQuestions = new HashSet<>();
-        mockQuestions.add(new Question("Q1", "A1"));
-        mockQuestions.add(new Question("Q2", "A2"));
-        mockQuestions.add(new Question("Q3", "A3"));
+    void getQuestions_shouldReturnJavaQuestions() {
+        Set<Question> javaQuestions = Set.of(
+                new Question("Java Q1", "A1"),
+                new Question("Java Q2", "A2")
+        );
 
-        when(questionService.getAll()).thenReturn(mockQuestions);
-        when(questionService.getRandomQuestion())
-                .thenReturn(new Question("Q1", "A1"))
-                .thenReturn(new Question("Q2", "A2"));
+        when(javaQuestionService.getAll()).thenReturn(javaQuestions);
+        when(javaQuestionService.getRandomQuestion())
+                .thenReturn(new Question("Java Q1", "A1"))
+                .thenReturn(new Question("Java Q2", "A2"));
 
-        var result = examinerService.getQuestions(2);
+        Collection<Question> result = examinerService.getQuestions("java", 2);
 
         assertEquals(2, result.size());
-        verify(questionService, times(2)).getRandomQuestion();
+        verify(javaQuestionService, times(2)).getRandomQuestion();
     }
 
     @Test
-    void getQuestions_shouldThrowExceptionWhenRequestedTooMany() {
-        Set<Question> mockQuestions = new HashSet<>();
-        mockQuestions.add(new Question("Q1", "A1"));
+    void getQuestions_shouldReturnMathQuestions() {
+        Set<Question> mathQuestions = Set.of(
+                new Question("Math Q1", "A1"),
+                new Question("Math Q2", "A2")
+        );
 
-        when(questionService.getAll()).thenReturn(mockQuestions);
+        when(mathQuestionService.getAll()).thenReturn(mathQuestions);
+        when(mathQuestionService.getRandomQuestion())
+                .thenReturn(new Question("Math Q1", "A1"))
+                .thenReturn(new Question("Math Q2", "A2"));
 
-        assertThrows(ResponseStatusException.class, () -> examinerService.getQuestions(2));
+        Collection<Question> result = examinerService.getQuestions("math", 2);
+
+        assertEquals(2, result.size());
+        assertTrue(result.stream().allMatch(q -> q.getQuestion().startsWith("Math")));
+        verify(mathQuestionService, times(2)).getRandomQuestion();
+    }
+
+    @Test
+    void getQuestions_shouldThrowWhenSubjectNotFound() {
+        assertThrows(ResponseStatusException.class,
+                () -> examinerService.getQuestions("physics", 1));
+    }
+
+    @Test
+    void getQuestions_shouldThrowWhenTooManyRequested() {
+        when(javaQuestionService.getAll()).thenReturn(Set.of(new Question("Q", "A")));
+
+        assertThrows(ResponseStatusException.class,
+                () -> examinerService.getQuestions("java", 2));
     }
 
     @Test
@@ -56,15 +81,15 @@ class ExaminerServiceImplTest {
         Question q1 = new Question("Q1", "A1");
         Question q2 = new Question("Q2", "A2");
 
-        when(questionService.getAll()).thenReturn(Set.of(q1, q2));
-        when(questionService.getRandomQuestion())
+        when(mathQuestionService.getAll()).thenReturn(Set.of(q1, q2));
+        when(mathQuestionService.getRandomQuestion())
                 .thenReturn(q1)
                 .thenReturn(q2)
                 .thenReturn(q1);
 
-        var result = examinerService.getQuestions(2);
+        Collection<Question> result = examinerService.getQuestions("math", 2);
 
         assertEquals(2, result.size());
-        assertEquals(2, new HashSet<>(result).size()); // проверка уникальности
+        assertEquals(2, new HashSet<>(result).size());
     }
 }

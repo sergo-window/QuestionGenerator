@@ -7,38 +7,47 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Service
 public class ExaminerServiceImpl implements ExaminerService {
-    private final QuestionService questionService;
+    private final Map<String, QuestionService> questionServices;
 
-    public ExaminerServiceImpl(QuestionService questionService) {
-        this.questionService = questionService;
-        createTestData();
-    }
-
-    private void createTestData() {
-        Question question = new Question("What is Java?", "Programming language");
-        Question question1 = new Question("Variable types in Java", "byte, short, int, long, float, double, boolean, char");
-        Question question2 = new Question("Types of collections in Java", "List, Map, Set");
-        Question question3 = new Question("Memory areas in Java", "Stack, Heap");
+    public ExaminerServiceImpl(
+            JavaQuestionService javaQuestionService,
+            MathQuestionService mathQuestionService) {
+        this.questionServices = Map.of(
+                "java", javaQuestionService,
+                "math", mathQuestionService
+        );
     }
 
     @Override
-    public Collection<Question> getQuestions(int amount) {
+    public Collection<Question> getQuestions(String subject, int amount) {
+        QuestionService questionService = questionServices.get(subject.toLowerCase());
+        if (questionService == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Subject '" + subject + "' not found"
+            );
+        }
+
         Collection<Question> allQuestions = questionService.getAll();
         if (amount > allQuestions.size()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Requested amount exceeds available questions count"
+                    String.format("Requested %d questions, but only %d available for subject '%s'",
+                            amount, allQuestions.size(), subject)
             );
         }
 
         Set<Question> uniqueQuestions = new HashSet<>();
         while (uniqueQuestions.size() < amount) {
             Question randomQuestion = questionService.getRandomQuestion();
-            uniqueQuestions.add(randomQuestion);
+            if (randomQuestion != null) {
+                uniqueQuestions.add(randomQuestion);
+            }
         }
 
         return uniqueQuestions;
